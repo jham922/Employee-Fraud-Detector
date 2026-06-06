@@ -203,6 +203,7 @@ function runAnalysis() {
     rawEmployees = computeTrends(current, prior);
     render(scoreFraud(rawEmployees, thresholds));
   } catch (e) {
+    console.error('runAnalysis error:', e);
     showErr('Parse error: ' + e.message);
   }
 }

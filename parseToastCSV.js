@@ -34,10 +34,10 @@ function parseCSVRow(line) {
 }
 
 function parseCSV(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  const lines = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
   if (lines.length === 0) return [];
 
-  const headers = parseCSVRow(lines[0]).map(h => h.trim());
+  const headers = parseCSVRow(lines[0]).map(h => h.trim().replace(/^﻿/, ''));
   const rows = [];
 
   for (let i = 1; i < lines.length; i++) {
