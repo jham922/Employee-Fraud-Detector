@@ -191,39 +191,69 @@ function parseVoidsDiscounts(csvText) {
 }
 
 // ---------------------------------------------------------------------------
+// Toast Employee Performance Report format (Overall_employeePerformance.csv)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses the real Toast "Employee Performance" export.
+ * Headers: EMPLOYEE_NAME, EMPLOYEE_GUID, NET_SALES, GROSS_SALES,
+ *          VOID_AMOUNT, VOIDED_ITEM_QUANTITY, DISCOUNT_AMOUNT,
+ *          ORDER_COUNT, TOTAL_LABOR_HOURS, ...
+ */
+function parsePerformanceReport(csvText) {
+  const rows = parseCSV(csvText);
+  return rows
+    .filter(r => r.EMPLOYEE_NAME && r.EMPLOYEE_NAME.trim())
+    .map(r => ({
+      employeeName:        r.EMPLOYEE_NAME.trim(),
+      jobs:                [],
+      netSales:            parseNumber(r.NET_SALES),
+      grossSales:          parseNumber(r.GROSS_SALES),
+      voidAmount:          parseNumber(r.VOID_AMOUNT),
+      voidCount:           parseNumber(r.VOIDED_ITEM_QUANTITY),
+      discountAmount:      parseNumber(r.DISCOUNT_AMOUNT),
+      discountCount:       0,
+      refundAmount:        0,
+      refundCount:         0,
+      tips:                0,
+      checks:              parseNumber(r.ORDER_COUNT),
+      hoursWorked:         parseNumber(r.TOTAL_LABOR_HOURS),
+      shifts:              0,
+      voidDetails:         [],
+      voidDetailCount:     0,
+      voidDetailAmount:    0,
+      discountDetails:     [],
+      discountDetailCount: 0,
+      discountDetailAmount:0,
+    }))
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Parse and merge Toast POS export CSVs.
+ * Parse Toast POS CSV exports. Auto-detects format:
+ *   - EMPLOYEE_NAME header → Overall_employeePerformance.csv (real Toast export)
+ *   - Employee Name header → legacy Sales Summary format
  *
- * @param {string} salesCSV   - Contents of the Employee Sales Summary CSV.
- * @param {string} [voidsCSV] - Contents of the Voids & Discounts CSV (optional).
- * @returns {EmployeeRecord[]} - Sorted array of merged employee records.
- *
- * @typedef {Object} EmployeeRecord
- * @property {string}   employeeName
- * @property {string[]} jobs
- * @property {number}   netSales
- * @property {number}   grossSales
- * @property {number}   tips
- * @property {number}   checks
- * @property {number}   hoursWorked
- * @property {number}   shifts
- * @property {number}   voidAmount          - Dollar total from Sales Summary
- * @property {number}   voidCount           - Count from Sales Summary
- * @property {number}   discountAmount
- * @property {number}   discountCount
- * @property {number}   refundAmount
- * @property {number}   refundCount
- * @property {Object[]} voidDetails         - Row-level records from Voids & Discounts CSV
- * @property {number}   voidDetailCount
- * @property {number}   voidDetailAmount
- * @property {Object[]} discountDetails
- * @property {number}   discountDetailCount
- * @property {number}   discountDetailAmount
+ * @param {string} salesCSV   - Employee performance or sales summary CSV text.
+ * @param {string} [voidsCSV] - Voids & Discounts CSV (only used with legacy format).
+ * @returns {EmployeeRecord[]}
  */
 export function parseToastData(salesCSV, voidsCSV) {
+  if (!salesCSV || !salesCSV.trim()) throw new Error('No CSV data provided');
+
+  const firstLine = salesCSV.trim().split(/\r?\n/)[0];
+  const firstHeader = parseCSVRow(firstLine)[0]?.trim();
+
+  // Real Toast employee performance export
+  if (firstHeader === 'EMPLOYEE_NAME') {
+    return parsePerformanceReport(salesCSV);
+  }
+
+  // Legacy format (test CSVs with "Employee Name" column)
   const salesMap = parseSalesSummary(salesCSV);
   const voidsMap = voidsCSV ? parseVoidsDiscounts(voidsCSV) : new Map();
 
