@@ -193,6 +193,7 @@ function clearErr()   { document.getElementById('upload-error').textContent = ''
 // ── Analysis ──────────────────────────────────────────────────────────────────
 
 function runAnalysis() {
+  console.log('runAnalysis v2 — salesText length:', salesText?.length ?? 'null');
   try {
     clearErr();
     const current = parseToastData(salesText, voidsText       ?? undefined);
