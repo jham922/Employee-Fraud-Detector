@@ -232,11 +232,8 @@ function render(scored) {
   document.getElementById('dashboard').hidden = false;
 
   const chipS = document.getElementById('chip-sales');
-  chipS.textContent = salesFileName || 'Sales CSV';
+  chipS.textContent = salesFileName || 'Employee Performance CSV';
   chipS.classList.toggle('loaded', !!salesText);
-  const chipV = document.getElementById('chip-voids');
-  chipV.textContent = voidsFileName || 'Voids CSV';
-  chipV.classList.toggle('loaded', !!voidsText);
 
   renderSummary(scored);
   renderAlerts(scored);
@@ -929,21 +926,11 @@ setupCard('upload-card-sales', 'input-sales',
     n => { salesFileName = n; },
     true));
 
-setupCard('upload-card-voids', 'input-voids',
-  makeFileHandler('upload-card-voids', 'fname-voids',
-    t => { voidsText = t; },
-    n => { voidsFileName = n; }));
-
 // Prior period
 setupCard('upload-card-prior-sales', 'input-prior-sales',
   makeFileHandler('upload-card-prior-sales', 'fname-prior-sales',
     t => { priorSalesText = t; },
     n => { priorSalesFileName = n; }));
-
-setupCard('upload-card-prior-voids', 'input-prior-voids',
-  makeFileHandler('upload-card-prior-voids', 'fname-prior-voids',
-    t => { priorVoidsText = t; },
-    n => { priorVoidsFileName = n; }));
 
 document.getElementById('run-btn').addEventListener('click', runAnalysis);
 document.getElementById('btn-reupload').addEventListener('click', goBack);
