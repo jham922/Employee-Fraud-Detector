@@ -193,16 +193,12 @@ function clearErr()   { document.getElementById('upload-error').textContent = ''
 // ── Analysis ──────────────────────────────────────────────────────────────────
 
 function runAnalysis() {
-  console.log('runAnalysis v2 — salesText length:', salesText?.length ?? 'null');
   try {
     clearErr();
     const current = parseToastData(salesText, voidsText ?? undefined);
-    console.log('parsed rows:', current.length, '— first:', current[0]?.employeeName ?? 'none');
     const prior = priorSalesText ? parseToastData(priorSalesText, priorVoidsText ?? undefined) : [];
     rawEmployees = computeTrends(current, prior);
-    const scored = scoreFraud(rawEmployees, thresholds);
-    console.log('scored:', scored.length, '— calling render');
-    render(scored);
+    render(scoreFraud(rawEmployees, thresholds));
   } catch (e) {
     console.error('runAnalysis error:', e);
     showErr('Parse error: ' + e.message);
