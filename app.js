@@ -5,6 +5,7 @@ import { scoreFraud, DEFAULT_THRESHOLDS }  from './fraudFlags.js';
 
 const STORAGE_KEY      = 'fraud-detector-thresholds';
 const RESTAURANT_KEY   = 'fraud-detector-restaurant';
+const EXCLUSIONS_KEY   = 'fraud-detector-exclusions';
 const RISK_ORDER       = { high: 0, medium: 1, clean: 2 };
 
 const SLIDER_CFG = {
@@ -195,8 +196,15 @@ function clearErr()   { document.getElementById('upload-error').textContent = ''
 function runAnalysis() {
   try {
     clearErr();
-    const current = parseToastData(salesText, voidsText ?? undefined);
-    const prior = priorSalesText ? parseToastData(priorSalesText, priorVoidsText ?? undefined) : [];
+    const exclusions = getExclusions();
+    const filterExcluded = arr => exclusions.size
+      ? arr.filter(e => !exclusions.has(e.employeeName.trim().toLowerCase()))
+      : arr;
+
+    const current = filterExcluded(parseToastData(salesText, voidsText ?? undefined));
+    const prior   = priorSalesText
+      ? filterExcluded(parseToastData(priorSalesText, priorVoidsText ?? undefined))
+      : [];
     rawEmployees = computeTrends(current, prior);
     render(scoreFraud(rawEmployees, thresholds));
   } catch (e) {
@@ -702,6 +710,16 @@ function saveRestaurantName(name) {
   try { localStorage.setItem(RESTAURANT_KEY, name); } catch { /* quota */ }
 }
 
+function getExclusions() {
+  try {
+    const raw = localStorage.getItem(EXCLUSIONS_KEY) || '';
+    return new Set(raw.split('\n').map(n => n.trim().toLowerCase()).filter(Boolean));
+  } catch { return new Set(); }
+}
+function saveExclusions(text) {
+  try { localStorage.setItem(EXCLUSIONS_KEY, text); } catch { /* quota */ }
+}
+
 function prRateClass(rate, warnT, critT) {
   if (rate > critT) return 'pr-crit';
   if (rate > warnT) return 'pr-warn';
@@ -887,6 +905,11 @@ function initSettings() {
   const rnInput = document.getElementById('sp-restaurant-name');
   rnInput.value = getRestaurantName();
   rnInput.addEventListener('input', () => saveRestaurantName(rnInput.value.trim()));
+
+  // Exclusions
+  const exInput = document.getElementById('sp-exclusions');
+  try { exInput.value = localStorage.getItem(EXCLUSIONS_KEY) || ''; } catch { /* */ }
+  exInput.addEventListener('input', () => saveExclusions(exInput.value));
 
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-close-sp').addEventListener('click', closeSettings);
