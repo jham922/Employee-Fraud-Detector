@@ -418,6 +418,110 @@
     .btn-export:hover { color: var(--green); border-color: var(--green-border); }
     .btn-export:active { transform: scale(.98); }
 
+    /* ── History button ─────────────────────────────────────────────────────── */
+
+    .btn-history {
+      font-family: var(--font-head); font-size: 13px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; padding: 6px 14px; background: transparent;
+      color: var(--text-2); border: 1px solid var(--border-hi); border-radius: var(--r);
+      cursor: pointer; transition: color .15s, border-color .15s; margin-right: 8px;
+    }
+    .btn-history:hover { color: var(--blue); border-color: var(--blue); }
+
+    .hist-prior-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono); font-size: 10px;
+      background: rgba(74,158,255,.08); border: 1px solid rgba(74,158,255,.3);
+      padding: 2px 8px; border-radius: 2px; color: var(--blue);
+      max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .hist-prior-chip::before { content: '◀'; font-size: 8px; opacity: .7; }
+
+    /* ── History panel ──────────────────────────────────────────────────────── */
+
+    .history-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      z-index: 199; opacity: 0; pointer-events: none;
+      transition: opacity .25s cubic-bezier(.4,0,.2,1);
+    }
+    .history-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .history-panel {
+      position: fixed; top: 0; left: 0; width: 420px; height: 100%;
+      background: var(--surface-1); border-right: 1px solid var(--border);
+      z-index: 200; overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+    }
+    .history-panel.open { transform: translateX(0); }
+
+    .hp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface-1); z-index: 1;
+    }
+    .hp-title {
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      letter-spacing: .2em; text-transform: uppercase; color: var(--text-2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hp-title::before { content: ''; display: inline-block; width: 3px; height: 13px; background: var(--blue); border-radius: 2px; }
+
+    .btn-close-hp {
+      background: transparent; border: none; color: var(--text-3); cursor: pointer;
+      font-size: 16px; padding: 2px 4px; transition: color .15s; line-height: 1;
+    }
+    .btn-close-hp:hover { color: var(--text-1); }
+
+    .hp-subhead {
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-3); line-height: 1.55;
+      padding: 12px 20px; border-bottom: 1px solid var(--border);
+    }
+
+    #history-list { padding: 10px 0; flex: 1; }
+
+    .hist-loading, .hist-empty {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+      padding: 24px 20px; line-height: 1.55;
+    }
+
+    .hist-run {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+      padding: 12px 20px; border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    .hist-run:last-child { border-bottom: none; }
+    .hist-run:hover { background: var(--surface-2); }
+    .hist-run.hist-selected { background: rgba(74,158,255,.06); }
+
+    .hist-run-main { flex: 1; min-width: 0; }
+    .hist-run-file { font-family: var(--font-mono); font-size: 11px; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+    .hist-run-date { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-bottom: 5px; }
+    .hist-run-stats { font-family: var(--font-mono); font-size: 10px; color: var(--text-2); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .hist-dot     { color: var(--text-3); }
+    .hist-flagged { color: var(--amber); }
+    .hist-high    { color: var(--red); }
+
+    .hist-run-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    .hist-btn {
+      font-family: var(--font-head); font-size: 11px; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; padding: 4px 9px; border-radius: var(--r);
+      cursor: pointer; transition: color .12s, border-color .12s, background .12s;
+      border: 1px solid; white-space: nowrap;
+    }
+    .hist-use {
+      background: transparent; color: var(--text-3); border-color: var(--border-hi);
+    }
+    .hist-use:hover { color: var(--blue); border-color: var(--blue); }
+    .hist-use-active { color: var(--blue) !important; border-color: var(--blue) !important; background: rgba(74,158,255,.08) !important; }
+    .hist-del {
+      background: transparent; color: var(--text-3); border-color: var(--border-hi);
+      font-size: 12px; padding: 4px 8px;
+    }
+    .hist-del:hover { color: var(--red); border-color: var(--red-border); }
+
     /* ── Settings text input ─────────────────────────────────────────────────── */
 
     .sp-text-input {
@@ -440,7 +544,8 @@
       @page { margin: .75in .75in .85in; }
 
       body { background: #fff !important; color: #111 !important; }
-      #upload-screen, #dashboard, .settings-panel, .settings-backdrop { display: none !important; }
+      #upload-screen, #dashboard, .settings-panel, .settings-backdrop,
+      .history-panel, .history-backdrop { display: none !important; }
       #print-root { display: block !important; font-family: 'Barlow', Arial, sans-serif; font-size: 10pt; color: #111; }
 
       .pr-header { border-bottom: 2pt solid #111; padding-bottom: 8pt; margin-bottom: 12pt; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 6pt; }
@@ -579,9 +684,11 @@
       <span class="dh-title">Fraud Detector</span>
       <div class="dh-sep"></div>
       <span class="dh-chip" id="chip-sales">Employee Performance CSV</span>
+      <span class="hist-prior-chip" id="hist-prior-label" hidden></span>
     </div>
     <div class="dh-right">
-      <button class="btn-export" id="btn-export">↓ Export Report</button>
+      <button class="btn-history"  id="btn-history">⏱ History</button>
+      <button class="btn-export"   id="btn-export">↓ Export Report</button>
       <button class="btn-settings" id="btn-settings">⚙ Thresholds</button>
       <button class="btn-reupload" id="btn-reupload">← Upload New Files</button>
     </div>
@@ -756,6 +863,20 @@
     </div>
 
   </div>
+</div>
+
+<!-- ── History backdrop + panel ──────────────────────────────────────────────── -->
+<div class="history-backdrop" id="history-backdrop"></div>
+
+<div class="history-panel" id="history-panel">
+  <div class="hp-header">
+    <span class="hp-title">Run History</span>
+    <button class="btn-close-hp" id="btn-close-history" aria-label="Close">✕</button>
+  </div>
+  <div class="hp-subhead">
+    Each analysis is automatically saved. Select a past run as the "prior period" to enable trend comparison — even if you didn't upload a prior CSV.
+  </div>
+  <div id="history-list"></div>
 </div>
 
 <div id="print-root"></div>

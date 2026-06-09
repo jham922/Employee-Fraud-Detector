@@ -1,5 +1,6 @@
 import { parseToastData }                  from './parseToastCSV.js';
 import { scoreFraud, DEFAULT_THRESHOLDS }  from './fraudFlags.js';
+import { saveRun, getAllRuns, deleteRun }  from './db.js';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -22,16 +23,18 @@ const SLIDER_CFG = {
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-let rawEmployees      = [];
-let employees         = [];
-let salesText         = null;
-let voidsText         = null;
-let priorSalesText    = null;
-let priorVoidsText    = null;
-let salesFileName     = '';
-let voidsFileName     = '';
-let priorSalesFileName = '';
-let priorVoidsFileName = '';
+let rawEmployees          = [];
+let currentEmployees      = [];   // parsed, pre-trend — used for history prior swap
+let employees             = [];
+let salesText             = null;
+let voidsText             = null;
+let priorSalesText        = null;
+let priorVoidsText        = null;
+let salesFileName         = '';
+let voidsFileName         = '';
+let priorSalesFileName    = '';
+let priorVoidsFileName    = '';
+let priorHistoryRun       = null; // { id, fileName, runDate, employees } from IndexedDB
 let sortCol           = 'riskLevel';
 let sortDir           = 'asc';
 let chartSales        = null;
@@ -202,9 +205,28 @@ function runAnalysis() {
       : arr;
 
     const current = filterExcluded(parseToastData(salesText, voidsText ?? undefined));
-    const prior   = priorSalesText
-      ? filterExcluded(parseToastData(priorSalesText, priorVoidsText ?? undefined))
-      : [];
+    currentEmployees = current;
+
+    // Auto-save this run to history
+    const flagged  = current.filter(e => {
+      const scored = scoreFraud([e], thresholds);
+      return scored[0]?.riskLevel !== 'clean';
+    });
+    saveRun({
+      fileName:      salesFileName || 'Unknown file',
+      employeeCount: current.length,
+      flaggedCount:  flagged.length,
+      highRiskCount: flagged.filter(e => scoreFraud([e], thresholds)[0]?.riskLevel === 'high').length,
+      employees:     current,
+    }).catch(() => {});
+
+    // Prior: history selection takes precedence over uploaded CSV
+    const prior = priorHistoryRun
+      ? priorHistoryRun.employees
+      : priorSalesText
+        ? filterExcluded(parseToastData(priorSalesText, priorVoidsText ?? undefined))
+        : [];
+
     rawEmployees = computeTrends(current, prior);
     render(scoreFraud(rawEmployees, thresholds));
   } catch (e) {
@@ -939,6 +961,101 @@ function goBack() {
   closeSettings();
 }
 
+// ── History panel ─────────────────────────────────────────────────────────────
+
+function fmtRunDate(ts) {
+  return new Date(ts).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  });
+}
+
+async function renderHistoryPanel() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div class="hist-loading">Loading…</div>';
+
+  let runs;
+  try { runs = await getAllRuns(); } catch { list.innerHTML = '<div class="hist-empty">Could not load history.</div>'; return; }
+
+  if (runs.length === 0) {
+    list.innerHTML = '<div class="hist-empty">No saved runs yet. Each time you run an analysis, it\'s automatically saved here.</div>';
+    return;
+  }
+
+  const selectedId = priorHistoryRun?.id ?? null;
+
+  list.innerHTML = runs.map(run => `
+    <div class="hist-run ${selectedId === run.id ? 'hist-selected' : ''}" data-id="${run.id}">
+      <div class="hist-run-main">
+        <div class="hist-run-file">${esc(run.fileName)}</div>
+        <div class="hist-run-date">${esc(fmtRunDate(run.runDate))}</div>
+        <div class="hist-run-stats">
+          <span>${run.employeeCount} employees</span>
+          <span class="hist-dot">·</span>
+          <span class="${run.flaggedCount > 0 ? 'hist-flagged' : ''}">${run.flaggedCount} flagged</span>
+          ${run.highRiskCount > 0 ? `<span class="hist-dot">·</span><span class="hist-high">${run.highRiskCount} high risk</span>` : ''}
+        </div>
+      </div>
+      <div class="hist-run-actions">
+        <button class="hist-btn hist-use ${selectedId === run.id ? 'hist-use-active' : ''}" data-action="use" data-id="${run.id}">
+          ${selectedId === run.id ? 'In use as prior' : 'Use as prior'}
+        </button>
+        <button class="hist-btn hist-del" data-action="delete" data-id="${run.id}" title="Delete this run">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-action="use"]').forEach(btn => {
+    btn.addEventListener('click', () => useAsPrior(runs.find(r => r.id === +btn.dataset.id)));
+  });
+  list.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = +btn.dataset.id;
+      try {
+        await deleteRun(id);
+        if (priorHistoryRun?.id === id) {
+          priorHistoryRun = null;
+          document.getElementById('hist-prior-label').hidden = true;
+        }
+        renderHistoryPanel();
+      } catch { /* ignore */ }
+    });
+  });
+}
+
+function useAsPrior(run) {
+  if (priorHistoryRun?.id === run.id) {
+    // toggle off
+    priorHistoryRun = null;
+    document.getElementById('hist-prior-label').hidden = true;
+  } else {
+    priorHistoryRun = run;
+    document.getElementById('hist-prior-label').textContent =
+      `Prior period: ${run.fileName} (${fmtRunDate(run.runDate)})`;
+    document.getElementById('hist-prior-label').hidden = false;
+  }
+
+  // Re-render panel to reflect new selection state
+  renderHistoryPanel();
+
+  // Re-run analysis automatically if we have data
+  if (currentEmployees.length > 0) {
+    rawEmployees = computeTrends(currentEmployees, priorHistoryRun?.employees ?? []);
+    render(scoreFraud(rawEmployees, thresholds));
+  }
+}
+
+function openHistory() {
+  renderHistoryPanel();
+  document.getElementById('history-panel').classList.add('open');
+  document.getElementById('history-backdrop').classList.add('open');
+}
+
+function closeHistory() {
+  document.getElementById('history-panel').classList.remove('open');
+  document.getElementById('history-backdrop').classList.remove('open');
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 setupCard('upload-card-sales', 'input-sales',
@@ -956,4 +1073,7 @@ setupCard('upload-card-prior-sales', 'input-prior-sales',
 document.getElementById('run-btn').addEventListener('click', runAnalysis);
 document.getElementById('btn-reupload').addEventListener('click', goBack);
 document.getElementById('btn-export').addEventListener('click', exportReport);
+document.getElementById('btn-history').addEventListener('click', openHistory);
+document.getElementById('history-backdrop').addEventListener('click', closeHistory);
+document.getElementById('btn-close-history').addEventListener('click', closeHistory);
 initSettings();
