@@ -70,3 +70,13 @@ Jennifer Hamilton and Daniel Sletten are in the default exclusion list placehold
 | F6 Trend Rising | `trendRisePct` — requires prior period data |
 
 Risk level: any critical flag → `high`; any warning flag, no critical → `medium`; no flags → `clean`.
+
+
+## Current state (maintained by the Hermes assistant)
+
+- **Status and next steps:** `docs/PROJECT-STATUS.md` — read this before starting work.
+- **Change log:** `docs/CHANGES.md` — append one dated line after every work session,
+  whoever did the work (Claude Code or Hermes). This is the handoff between tools.
+- Server-side automation (scheduled jobs, vendor-portal pulls, databases) is **not** in
+  this repo — it lives on the Hermes host. Nothing here should assume it is visible.
+- Never commit credentials. Portal logins and API keys stay server-side.
