@@ -7,3 +7,4 @@ Newest last. One line per session, prefixed with who did it.
 - 2026-10-06 — Hermes: published `docs/PROJECT-STATUS.md`; no application changes.
 - 2026-10-06 — Hermes: published `docs/PROJECT-STATUS.md`; no application changes.
 - 2026-10-07 — Hermes: updated `docs/PROJECT-STATUS.md`.
+- 2026-10-08 — Hermes: updated `docs/PROJECT-STATUS.md`.
