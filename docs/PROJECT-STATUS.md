@@ -1,6 +1,6 @@
 # Project status — Employee-Fraud-Detector
 
-_Maintained jointly. Last updated 2026-10-17 by the Hermes assistant._
+_Maintained jointly. Last updated 2026-10-18 by the Hermes assistant._
 _Read `docs/CHANGES.md` for the running log; append a line there after any session._
 
 ## 6. Employee-Fraud-Detector
