@@ -51,3 +51,4 @@ Newest last. One line per session, prefixed with who did it.
 - 2026-11-18 — Hermes: updated `docs/PROJECT-STATUS.md`.
 - 2026-11-19 — Hermes: updated `docs/PROJECT-STATUS.md`.
 - 2026-11-20 — Hermes: updated `docs/PROJECT-STATUS.md`.
+- 2026-11-21 — Hermes: updated `docs/PROJECT-STATUS.md`.
